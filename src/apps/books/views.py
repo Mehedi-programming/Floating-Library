@@ -18,15 +18,17 @@ from django.db.models import Count, Avg, Sum, Max, Min
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
 def book_create(request):
-        serializer = BookCreateUpdateSerializer(data=request.data)
+        serializer = BookCreateUpdateSerializer(data=request.data, context={'request':request,  'owner': request.user})
         serializer.is_valid(raise_exception=True)
-        book = serializer.save(owner=request.user)
+        book = serializer.save()
         bookSerializer = BookDetailSerializer(book)
         return Response({"message": "Book created successfully", "data": bookSerializer.data}, status=status.HTTP_201_CREATED)
 
 
 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
 def book_update(request, book_id):
@@ -56,16 +58,15 @@ def book_list(request):
 def book_search(request):
     query = request.GET.get('q', '')
     if query:
-        posts = Book.objects.filter(Q(title__icontains=query) |
+        books = Book.objects.filter(Q(title__icontains=query) |
                                     Q(author__icontains=query) |
                                     Q(category__name__icontains=query)).distinct()
     else:
-        posts = Book.objects.datetimes('created_at', 'year')
-    if not Book.exists():
-        return Response({"message": "No posts found."}, status=status.HTTP_404_NOT_FOUND)
-    serializer = BookListSerializer(posts, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
+        books = Book.objects.all()  
+    if not books.exists(): 
+        return Response({"message": "Books not found."}, status=status.HTTP_404_NOT_FOUND)
+    serializer = BookListSerializer(books, many=True)
+    return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -75,6 +76,7 @@ def book_delete(request, book_id):
         book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_200_OK)
 
+        
 
 @api_view(['GET'])
 def category_list(request):
@@ -85,17 +87,81 @@ def category_list(request):
 
 @api_view(["GET"])
 def books_by_category(request, category_id):
-        category = get_object_or_404(Catregory, id=category_id)
-        books = Book.objects.filter(category=category)
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+    category = get_object_or_404(Catregory, id=category_id)
+    books = Book.objects.filter(category=category)
+    serializer = BookListSerializer(books, many=True)
+    return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
-def updated_books(request):
-        books = Book.objects.datetimes('created_at', 'month')
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def add_comment(request, book_id):
+    post = get_object_or_404(Book, pk=book_id)
+    serializer = CommentSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save(user=request.user, post=post)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def edit_comment(requset, comment_id):
+        comment = get_object_or_404(Comment, pk=id)
+        if comment.user != requset.user:
+                return Response({"error":"You can't edit the comment."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = CommentSerializer(comment, data=requset.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data) 
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@api_view(["POST"])
+def votes_book(request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+        book_review, created = BookReview.objects.get_or_create(book=book, reviewer=request.user)
+        if not created:
+            book_review.votes += 1
+            book_review.save()
+            return Response({"message": "Your vote has been counted."}, status=status.HTTP_200_OK)
+        return Response({"message": "Thank you for voting."}, status=status.HTTP_201_CREATED)
 
 @api_view(["GET"])
 def popular_books(request):
@@ -105,6 +171,8 @@ def popular_books(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
 def user_books(request):
         books = Book.objects.filter(owner=request.user)
         serializer = BookListSerializer(books, many=True)
@@ -112,6 +180,8 @@ def user_books(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
 def borrowed_books(request):
         transactions = BookTransaction.objects.filter(borrower=request.user)
         books = [transaction.book for transaction in transactions]
@@ -126,6 +196,8 @@ def borrow_request(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
 def lent_books(request):
         transactions = BookTransaction.objects.filter(lender=request.user)
         books = [transaction.book for transaction in transactions]
@@ -137,6 +209,4 @@ def lent_books(request):
 
         
 
-
-
-               
+       

@@ -37,7 +37,8 @@ class Book(models.Model):
             while Book.objects.filter(slug=slug).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
-        self.slug = slug
+
+            self.slug = slug
         super().save(*args, **kwargs)
 
 
