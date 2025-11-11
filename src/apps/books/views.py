@@ -93,6 +93,28 @@ def books_by_category(request, category_id):
     return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def borrowed_books(request):
+        transactions = BookTransaction.objects.filter(borrower=request.user)
+        books = [transaction.book for transaction in transactions]
+        serializer = BookListSerializer(books, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def user_books(request):
+        books = Book.objects.filter(owner=request.user)
+        serializer = BookListSerializer(books, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
@@ -117,6 +139,34 @@ def edit_comment(requset, comment_id):
         return Response(serializer.data) 
 
       
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def  delete_comment(request,id):
+    comment = get_object_or_404(Comment, pk=id)
+    if comment.user != request.user:
+        return Response({"error":"You can't delete the comment."}, status=status.HTTP_403_FORBIDDEN)
+    comment.delete()
+    return Response({"message":"Comment deleted successfully."}, status=status.HTTP_200_OK)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def  votes_comment(request, comment_id, action):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if action == 'upvotes':
+        comment.upvotes += 1
+        comment.save(update_fields=['upvotes'])
+    elif action == 'downvotes':
+        comment.downvotes += 1
+        comment.save(update_fields=['downvotes'])
+    else:
+        return Response({"error":"Invalid action."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = CommentSerializer(comment)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -150,18 +200,6 @@ def edit_comment(requset, comment_id):
 
 
 
-
-
-
-@api_view(["POST"])
-def votes_book(request, book_id):
-        book = get_object_or_404(Book, id=book_id)
-        book_review, created = BookReview.objects.get_or_create(book=book, reviewer=request.user)
-        if not created:
-            book_review.votes += 1
-            book_review.save()
-            return Response({"message": "Your vote has been counted."}, status=status.HTTP_200_OK)
-        return Response({"message": "Thank you for voting."}, status=status.HTTP_201_CREATED)
 
 @api_view(["GET"])
 def popular_books(request):
@@ -170,23 +208,6 @@ def popular_books(request):
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication])
-def user_books(request):
-        books = Book.objects.filter(owner=request.user)
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication])
-def borrowed_books(request):
-        transactions = BookTransaction.objects.filter(borrower=request.user)
-        books = [transaction.book for transaction in transactions]
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])

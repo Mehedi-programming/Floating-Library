@@ -25,6 +25,7 @@ class Book(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     slug = models.SlugField(max_length=300, unique=True, blank=True, null=True)
 
+
     class Meta:
         ordering = ['created_at']
 
@@ -66,9 +67,14 @@ class BookTransaction(models.Model):
 class BookReview(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='book_reviews')
     reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='book_reviews')
-    votes = models.IntegerField(default=1)
+    upvotes = models.PositiveIntegerField(default=0)
+    downvotes = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        unique_together = ('reviewer', 'book') 
 
 
 class Comment(models.Model):
