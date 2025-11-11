@@ -104,6 +104,16 @@ def borrowed_books(request):
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def lent_books(request):
+        transactions = BookTransaction.objects.filter(lender=request.user)
+        books = [transaction.book for transaction in transactions]
+        serializer = BookListSerializer(books, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -216,14 +226,7 @@ def borrow_request(request):
        
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication])
-def lent_books(request):
-        transactions = BookTransaction.objects.filter(lender=request.user)
-        books = [transaction.book for transaction in transactions]
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
 
    
     
