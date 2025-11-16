@@ -95,8 +95,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class BookCreateUpdateSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(write_only=True, required=False)  
-    owner = UserSerializer(read_only=True)     
-    category = CategorySerializer(read_only=True)  
+    owner = UserSerializer(read_only=True)       
 
     class Meta:
         model = Book
@@ -107,29 +106,29 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        category_name = validated_data.pop("category_name", None)
+        category = validated_data.pop("category_name", None)
         owner = self.context['request'].user
         book = Book.objects.create(owner=owner, **validated_data)
 
-        if category_name:
+        if category:
             category_obj, _ = Catregory.objects.get_or_create(
-                name=category_name.strip().lower()
+                name=category.strip().lower()
             )
             book.category = category_obj
             book.save()
         return book
 
     def update(self, instance, validated_data):
-        category_name = validated_data.pop('category_name', None)
+        category = validated_data.pop('category_name', None)
         instance.title = validated_data.get('title', instance.title)
         instance.author = validated_data.get('author', instance.author)
         instance.published_date = validated_data.get('published_date', instance.published_date)
         instance.book_image = validated_data.get('book_image', instance.book_image)
         instance.language = validated_data.get('language', instance.language)
 
-        if category_name:
+        if category:
             category_obj, _ = Catregory.objects.get_or_create(
-                name=category_name.strip().lower()
+                name=category.strip().lower()
             )
             instance.category = category_obj
 

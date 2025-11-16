@@ -68,6 +68,16 @@ def book_search(request):
     serializer = BookListSerializer(books, many=True)
     return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def user_books(request):
+        books = Book.objects.filter(owner=request.user)
+        serializer = BookListSerializer(books, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
+
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
@@ -94,35 +104,24 @@ def books_by_category(request, category_id):
 
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication])
-def borrowed_books(request):
-        transactions = BookTransaction.objects.filter(borrower=request.user)
-        books = [transaction.book for transaction in transactions]
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# def borrowed_books(request):
+#         transactions = BookTransaction.objects.filter(borrower=request.user)
+#         books = [transaction.book for transaction in transactions]
+#         serializer = BookListSerializer(books, many=True)
+#         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication])
-def lent_books(request):
-        transactions = BookTransaction.objects.filter(lender=request.user)
-        books = [transaction.book for transaction in transactions]
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
-
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication])
-def user_books(request):
-        books = Book.objects.filter(owner=request.user)
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
-
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# def lent_books(request):
+#         transactions = BookTransaction.objects.filter(lender=request.user)
+#         books = [transaction.book for transaction in transactions]
+#         serializer = BookListSerializer(books, many=True)
+#         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -152,7 +151,7 @@ def edit_comment(requset, comment_id):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
-def  delete_comment(request,id):
+def delete_comment(request,id):
     comment = get_object_or_404(Comment, pk=id)
     if comment.user != request.user:
         return Response({"error":"You can't delete the comment."}, status=status.HTTP_403_FORBIDDEN)
@@ -164,7 +163,7 @@ def  delete_comment(request,id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
-def  votes_comment(request, comment_id, action):
+def votes_comment(request, comment_id, action):
     comment = get_object_or_404(Comment, pk=comment_id)
     if action == 'upvotes':
         comment.upvotes += 1
@@ -180,42 +179,11 @@ def  votes_comment(request, comment_id, action):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@api_view(["GET"])
-def popular_books(request):
-        books = Book.objects.annotate(total_votes=sum('book_reviews__votes'))>10
-        serializer = BookListSerializer(books, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+# @api_view(["GET"])
+# def popular_books(request):
+#         books = Book.objects.annotate(total_votes=sum('book_reviews__votes'))>10
+#         serializer = BookListSerializer(books, many=True)
+#         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
 

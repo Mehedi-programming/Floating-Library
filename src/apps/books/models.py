@@ -83,5 +83,17 @@ class Comment(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    upvotes = models.PositiveIntegerField(default=0)
-    downvotes = models.PositiveIntegerField(default=0)
+
+
+class Comment_vote(models.Model):
+    choice_field= (
+        ('upvote','Upvote'),
+        ('downvote','Downvote')
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_votes')
+    vote = models.CharField(max_length=10, choices=choice_field)
+
+    class Meta:
+        unique_together = ('user', 'comment')

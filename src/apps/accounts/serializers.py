@@ -36,6 +36,21 @@ class VerifyOtpSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(min_length=4, write_only = True)
 
-class ResetPasswordSerializer(serializers.Serializer):
+class   ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only= True)
+
+
+class AttachmentSerializer(serializers.Serializer):
+    filename = serializers.CharField()
+    content = serializers.CharField()  
+    content_type = serializers.CharField()
+
+class EmailSerializer(serializers.Serializer):
+    subject = serializers.CharField()
+    message = serializers.CharField()
+    recipient_list = serializers.ListField(child=serializers.EmailField())
+    cc = serializers.ListField(child=serializers.EmailField(), required=False)
+    bcc = serializers.ListField(child=serializers.EmailField(), required=False)
+    reply_to = serializers.ListField(child=serializers.EmailField(), required=False)
+    attachments = AttachmentSerializer(many=True, required=False)  
