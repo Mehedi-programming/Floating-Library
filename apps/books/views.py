@@ -92,9 +92,12 @@ def user_books(request):
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
 def book_delete(request, book_id):
-        book = get_object_or_404(Book, id=book_id, owner=request.user)
-        book.delete()
-        return Response({"message": "Book deleted successfully"}, status=status.HTTP_200_OK)
+    book = get_object_or_404(Book, id=book_id)
+    if book.owner != request.user:
+        return Response({"message": "This is not your book"}, status=status.HTTP_403_FORBIDDEN)
+    
+    book.delete()
+    return Response({"message": "Book deleted successfully"}, status=status.HTTP_200_OK)
         
 
 @api_view(['GET'])
@@ -216,7 +219,7 @@ def book_review(request, book_id):
 
 # borrower request view, accept/reject request, lender history, borrower history can be added here
 @api_view(["POST"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def borrow_request(request, book_id):
     book = get_object_or_404(Book, id=book_id)
@@ -263,7 +266,7 @@ def send_mail_to_lender(recipient_email, borrower_email, book_title):
 
 
 @api_view(["PATCH"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def cancel_borrow_request(request, request_id):
     borrow_request = get_object_or_404(BorrowRequest, id=request_id, requester=request.user)
@@ -276,7 +279,7 @@ def cancel_borrow_request(request, request_id):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def accept_borrow_request(request, request_id):
     borrow_request = get_object_or_404(BorrowRequest, id=request_id)
@@ -301,7 +304,7 @@ def accept_borrow_request(request, request_id):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def reject_borrow_request(request, request_id):
     borrow_request = get_object_or_404(BorrowRequest, id=request_id)
@@ -319,7 +322,7 @@ def reject_borrow_request(request, request_id):
 
 # borrower history
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def borrow_request_page(request):
     borrow_requests = BorrowRequest.objects.filter(requester=request.user).order_by('-created_at')
@@ -329,7 +332,7 @@ def borrow_request_page(request):
 
 # lender history
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def lend_request_page(request):
     lend_requests = BorrowRequest.objects.filter(owner=request.user).order_by('-created_at')
@@ -341,8 +344,8 @@ def lend_request_page(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated, IsActiveUser])
 @authentication_classes([JWTAuthentication])
-def return_book(request, borrow_request_id):
-    borrow_request = get_object_or_404(BorrowRequest, id=borrow_request_id)
+def return_book(request, request_id):
+    borrow_request = get_object_or_404(BorrowRequest, id=request_id)
     if borrow_request.requester != request.user:
         return Response({"message":"You are not authorized to return this book."}, status=status.HTTP_403_FORBIDDEN)
     if borrow_request.status != 'ACCEPTED':
@@ -369,10 +372,19 @@ def return_book(request, borrow_request_id):
     )
 
 
+@api_view(["GET"])
+@permission_classes([IsActiveUser])
+@authentication_classes([JWTAuthentication])
+def my_requests(request):
+    requests = BorrowRequest.objects.filter(requester=request.user)
+    serializer = BorrowRequestSerializer(requests, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 # books count
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def books_count(request):
     total_books = Book.objects.filter(owner=request.user).count()
@@ -380,7 +392,7 @@ def books_count(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def borrowed_books_count(request):
     borrowed_books = BorrowRequest.objects.filter(requester=request.user, status='ACCEPTED').count()
@@ -388,7 +400,7 @@ def borrowed_books_count(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsActiveUser])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def lent_books_count(request):
     lent_books = BorrowRequest.objects.filter(owner=request.user, status='ACCEPTED').count()
