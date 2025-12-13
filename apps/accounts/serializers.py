@@ -26,7 +26,7 @@ class signInSerializer(serializers.Serializer):
 class UpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name"]
+        fields = ["id", "name", "email", "location"]
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
