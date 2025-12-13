@@ -263,3 +263,12 @@ def my_accounts(request):
     my_accounts = User.objects.filter(user=request.user)
     serializer = UserSerializer(my_accounts)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def all_accounts(request):
+    accounts = User.objects.all()
+    serializer = UserSerializer(accounts, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
