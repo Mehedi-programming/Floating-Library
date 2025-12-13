@@ -9,7 +9,7 @@ from django.utils import timezone
 from .models import *
 from .utils import *
 from .serializers import *
-from apps.accounts.permissions import IsSuperAdmin
+from apps.accounts.permissions import IsSuperAdmin, IsActiveUser
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
@@ -53,31 +53,46 @@ def signin(request):
 
 #edit profile
 @api_view(['PATCH'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
-def edit_profile(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+def edit_profile(request):
+    user = request.user  
     serializer = UpdateSerializer(user, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    return Response({"message": "Your updated successfully."}, status=status.HTTP_200_OK)
+    return Response(
+        {"message": "Profile updated successfully."},
+        status=status.HTTP_200_OK
+    )
 
 
-@api_view(['PATCH'])
+
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])
 def change_password(request):
     serializer = ChangePasswordSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    old_password = serializer.validated_data.get('old_password')
-    new_password = serializer.validated_data.get('new_password')
-    
-    user = User.objects.get(id=request.user.id)
-    if user.check_password(old_password):
-        user.set_password(new_password)
-        user.save()
-        return Response({"message":"Password change successfully."}, status=status.HTTP_200_OK)
-    return Response({"message":"Invalid password."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    old_password = serializer.validated_data['old_password']
+    new_password = serializer.validated_data['new_password']
+
+    user = request.user
+
+    if not user.check_password(old_password):
+        return Response(
+            {"message": "Old password is incorrect."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response(
+        {"message": "Password changed successfully. Please login again."},
+        status=status.HTTP_200_OK
+    )
+
 
 
 @api_view(['POST'])
@@ -145,7 +160,7 @@ def reset_password(request):
 
         try:
             user = User.objects.get(email=email)
-            otp_obj = Otp.objects.get(user=user, is_used=False)
+            otp_obj = Otp.objects.filter(user=user, is_used=False).first()
         except (User.DoesNotExist, Otp.DoesNotExist):
             return Response({"detail": "Invalid request"}, status=status.HTTP_404_NOT_FOUND)
         if otp_obj.expired_at < timezone.now():
