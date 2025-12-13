@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, AbstractUser
 from .managers import CustomerUserManager
 
 
@@ -17,6 +17,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='USER')
     is_lender = models.BooleanField(default=False)
     is_borrower = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = CustomerUserManager()
 
@@ -27,7 +29,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
     
     class Meta:
-        ordering = ['-id']
+        ordering = ['-created_at']
 
 
 class Otp(models.Model):
