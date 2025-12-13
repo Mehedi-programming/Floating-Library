@@ -26,6 +26,7 @@ urlpatterns = [
     path('borrow-request-page/', borrow_request_page, name='borrow_request_page'),
     path('lend-request-page/', lend_request_page, name='lend_request_page'),
     path('return-book/<int:request_id>/', return_book, name='return_book'),
+    path('my-requests/', my_requests, name='my_requests'),
     path('add-to-wishlist/<int:book_id>/', add_to_wishlist, name='add_to_wishlist'),
     path('wishlist/', wishlist, name='wishlist'),
     path('remove-from-wishlist/<int:book_id>/', remove_from_wishlist, name='remove_from_wishlist'),
