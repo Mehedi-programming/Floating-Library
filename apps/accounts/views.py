@@ -25,9 +25,27 @@ def sign_up(request):
             location=serializer.validated_data.get('location'),
         )
         user.set_password(serializer.validated_data.get('password'))
+        mail = user.email
+        send_mail_verification(mail)
         user.save()
         return Response({"message": "User successfully registered."}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def send_mail_verification(receiver_email):
+    subject = "Welcome to Floating Library"
+    message = "Thank you for registering with Floating Library. Your account is under review and will be activated soon."
+
+    from_email = settings.DEFAULT_FROM_EMAIL  
+    recipient_list = receiver_email   
+    mail = EmailMultiAlternatives(
+        subject=subject,
+        body=message,
+        from_email=from_email,
+        to=[recipient_list],
+    )
+    mail.send(fail_silently=False)
+    print("Verification email sent successfully to:", recipient_list)
 
 
 @api_view(['POST'])
@@ -208,8 +226,26 @@ def reset_password(request):
 def activate_user_account(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.is_active = True
+    mail = user.email
+    send_mail_activation(mail)
     user.save()
     return Response({"message": "User account activated"}, status=200)
+
+
+def send_mail_activation(receiver_email):
+    subject = "Account Activation Notice"
+    message = "Your account has been activated. You can now log in and start using our services."
+
+    from_email = settings.DEFAULT_FROM_EMAIL  
+    recipient_list = receiver_email   
+    mail = EmailMultiAlternatives(
+        subject=subject,
+        body=message,
+        from_email=from_email,
+        to=[recipient_list],
+    )
+    mail.send(fail_silently=False)
+    print("Activation email sent successfully to:", recipient_list)
 
 
 @api_view(["PATCH"])

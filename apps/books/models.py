@@ -3,7 +3,6 @@ from django.utils.text import slugify
 from apps.accounts.models import User
 
 
-
 # Create your models here.
 class Catregory(models.Model):
     name = models.CharField(max_length=100, unique=True)
