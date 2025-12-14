@@ -104,7 +104,7 @@ class BookDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'author', 'published_date',
             'book_image', 'language', 'created_at', 'updated_at',
-            'slug', 'category', 'owner', 'comments', 'short_description', 'is_available',
+            'slug', 'category', 'owner', 'comments', 'short_description', 'is_available', 'rating'
         ]
 
     def get_is_available(self, obj):
