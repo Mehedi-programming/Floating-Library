@@ -340,6 +340,6 @@ def my_accounts(request):
 @permission_classes([IsSuperAdmin])
 @authentication_classes([JWTAuthentication])
 def all_accounts(request):
-    accounts = User.objects.exclude(id=request.user.id)
+    accounts = User.objects.filter(is_superuser=False).exclude(id=request.user.id)
     serializer = UserSerializer(accounts, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
