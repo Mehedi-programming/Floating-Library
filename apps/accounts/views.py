@@ -301,10 +301,8 @@ def dashboard_stats(request):
 @permission_classes([IsSuperAdmin])
 @authentication_classes([JWTAuthentication])
 def all_user(request):
-    # exclude superuser accounts from the list
-    # users = User.objects.exclude(is_superuser=True)
-    users = User.objects.all()
-    serializer = UserSerializer(users, many=True)
+    accounts = User.objects.filter(is_superuser=False).exclude(id=request.user.id)
+    serializer = UserSerializer(accounts, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
