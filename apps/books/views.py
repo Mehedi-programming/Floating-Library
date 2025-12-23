@@ -268,7 +268,7 @@ def send_mail_to_lender(recipient_email, borrower_email, book_title):
     mail.send(fail_silently=False)    
 
 
-@api_view(["DELETE"])
+@api_view(["PATCH"])
 @permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def cancel_borrow_request(request, request_id):
@@ -277,11 +277,11 @@ def cancel_borrow_request(request, request_id):
         return Response({"message":"This request has already been processed."}, status=status.HTTP_400_BAD_REQUEST)
     
     borrow_request.status = 'CANCELLED'
-    borrow_request.delete()
+    borrow_request.save()
     return Response({"message":"Borrow request cancelled."}, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(["PATCH"])
 @permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def accept_borrow_request(request, request_id):
@@ -291,12 +291,12 @@ def accept_borrow_request(request, request_id):
     if borrow_request.status != 'PENDING':
         return Response({"message":"This request has already been processed."}, status=status.HTTP_400_BAD_REQUEST)
     
+    if borrow_request.owner != request.user:
+        return Response({"message":"You are not authorized to accept this request."}, status=status.HTTP_403_FORBIDDEN)
+    
     if BorrowRequest.objects.filter(book=borrow_request.book, status='ACCEPTED').exists():
         return Response({"message":"This book has already been accepted for borrowing."}, status=status.HTTP_400_BAD_REQUEST)
     
-
-    if borrow_request.owner != request.user:
-        return Response({"message":"You are not authorized to accept this request."}, status=status.HTTP_403_FORBIDDEN)
     
     borrow_request.status = 'ACCEPTED'
     borrow_request.accepted_at = timezone.now()
@@ -329,21 +329,21 @@ def reject_borrow_request(request, request_id):
     return Response({"message":"Borrow request rejected.", "data": serializer.data}, status=status.HTTP_200_OK)       
 
 
-@api_view(["DELETE"])
-@permission_classes([IsActiveUser])
-@authentication_classes([JWTAuthentication])
-def delete_borrow_request(request, request_id):
-    borrow_request = get_object_or_404(BorrowRequest, id=request_id)
+# @api_view(["DELETE"])
+# @permission_classes([IsActiveUser])
+# @authentication_classes([JWTAuthentication])
+# def delete_borrow_request(request, request_id):
+#     borrow_request = get_object_or_404(BorrowRequest, id=request_id)
 
-    if request.user not in [borrow_request.requester, borrow_request.owner]:
-        return Response(
-            {"message": "You are not authorized to delete this borrow request."},
-            status=status.HTTP_403_FORBIDDEN)
-    if borrow_request.status in ['ACCEPTED', 'RETURNED']:
-        return Response(
-            {"message": "Accepted or returned borrow requests cannot be deleted."}, status=status.HTTP_400_BAD_REQUEST)
-    borrow_request.delete()
-    return Response({"message": "Borrow request deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+#     if request.user not in [borrow_request.requester, borrow_request.owner]:
+#         return Response(
+#             {"message": "You are not authorized to delete this borrow request."},
+#             status=status.HTTP_403_FORBIDDEN)
+#     if borrow_request.status in ['ACCEPTED', 'RETURNED']:
+#         return Response(
+#             {"message": "Accepted or returned borrow requests cannot be deleted."}, status=status.HTTP_400_BAD_REQUEST)
+#     borrow_request.delete()
+#     return Response({"message": "Borrow request deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 
 
