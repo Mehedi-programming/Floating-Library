@@ -268,7 +268,7 @@ def send_mail_to_lender(recipient_email, borrower_email, book_title):
     mail.send(fail_silently=False)    
 
 
-@api_view(["PATCH"])
+@api_view(["DELETE"])
 @permission_classes([IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def cancel_borrow_request(request, request_id):
@@ -277,7 +277,7 @@ def cancel_borrow_request(request, request_id):
         return Response({"message":"This request has already been processed."}, status=status.HTTP_400_BAD_REQUEST)
     
     borrow_request.status = 'CANCELLED'
-    borrow_request.save()
+    borrow_request.delete()
     return Response({"message":"Borrow request cancelled."}, status=status.HTTP_200_OK)
 
 
