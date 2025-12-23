@@ -368,7 +368,7 @@ def lend_request_page(request):
 
 
 # return borrowed book to lender
-@api_view(["POST"])
+@api_view(["PATCH"])
 @permission_classes([IsAuthenticated, IsActiveUser])
 @authentication_classes([JWTAuthentication])
 def return_book(request, request_id):
